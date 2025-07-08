@@ -1,7 +1,8 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { FileUploader } from './components/FileUploader';
 import { ExpectedFormat } from './components/ExpectedFormat';
 import { Navigation } from './components/Navigation';
+import { PdfViewer } from './components/PdfViewer';
 import { uploadToN8n } from './services/n8nService';
 
 function App() {
@@ -9,17 +10,26 @@ function App() {
   const [isUploading, setIsUploading] = useState(false);
   const [uploadStatus, setUploadStatus] = useState<'idle' | 'success' | 'error'>('idle');
   const [errorMessage, setErrorMessage] = useState<string>('');
+  const [pdfUrl, setPdfUrl] = useState<string>('');
+  const [uploadedFileName, setUploadedFileName] = useState<string>('');
 
   const handleFileUpload = async (file: File) => {
     setIsUploading(true);
     setUploadStatus('idle');
     setErrorMessage('');
+    setPdfUrl('');
+    setUploadedFileName(file.name);
 
     try {
       const result = await uploadToN8n(file);
       
       if (result.success) {
         setUploadStatus('success');
+        
+        // If PDF is returned, set the PDF URL
+        if (result.pdfUrl) {
+          setPdfUrl(result.pdfUrl);
+        }
       } else {
         setUploadStatus('error');
         setErrorMessage(result.message);
@@ -51,6 +61,8 @@ function App() {
               isUploading={isUploading}
               uploadStatus={uploadStatus}
               errorMessage={errorMessage}
+              pdfUrl={pdfUrl}
+              onViewReport={() => setPdfUrl(pdfUrl)} // This will trigger the PDF viewer
             />
             
             <ExpectedFormat />
@@ -96,6 +108,13 @@ function App() {
     }
   };
 
+  const handleClosePdf = () => {
+    setPdfUrl('');
+    if (pdfUrl) {
+      URL.revokeObjectURL(pdfUrl); // Clean up the blob URL
+    }
+  };
+
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Header */}
@@ -123,6 +142,15 @@ function App() {
           </div>
         </div>
       </footer>
+
+      {/* PDF Viewer Modal */}
+      {pdfUrl && (
+        <PdfViewer 
+          pdfUrl={pdfUrl} 
+          filename={uploadedFileName.replace('.csv', '-report.pdf')}
+          onClose={handleClosePdf}
+        />
+      )}
     </div>
   );
 }

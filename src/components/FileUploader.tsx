@@ -6,13 +6,17 @@ interface FileUploaderProps {
   isUploading: boolean;
   uploadStatus: 'idle' | 'success' | 'error';
   errorMessage?: string;
+  pdfUrl?: string;
+  onViewReport?: () => void;
 }
 
 export const FileUploader: React.FC<FileUploaderProps> = ({
   onFileUpload,
   isUploading,
   uploadStatus,
-  errorMessage
+  errorMessage,
+  pdfUrl,
+  onViewReport
 }) => {
   const [isDragOver, setIsDragOver] = useState(false);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
@@ -97,8 +101,21 @@ export const FileUploader: React.FC<FileUploaderProps> = ({
       return (
         <div className="flex flex-col items-center space-y-4">
           <CheckCircle className="w-12 h-12 text-green-500" />
-          <p className="text-lg font-medium text-green-700">Upload Successful!</p>
-          <p className="text-sm text-gray-600">Your CSV file has been sent to n8n</p>
+          <p className="text-lg font-medium text-green-700">
+            {pdfUrl ? 'Report Generated Successfully!' : 'Upload Successful!'}
+          </p>
+          <p className="text-sm text-gray-600">
+            {pdfUrl ? 'Your CSV file has been processed and a report is ready' : 'Your CSV file has been sent to n8n'}
+          </p>
+          {pdfUrl && onViewReport && (
+            <button
+              onClick={onViewReport}
+              className="flex items-center space-x-2 px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium"
+            >
+              <File className="w-4 h-4" />
+              <span>View Report</span>
+            </button>
+          )}
         </div>
       );
     }

@@ -6,6 +6,8 @@ A beautiful, production-ready React application for uploading CSV files to n8n w
 
 - **Drag & Drop Upload**: Intuitive file upload with drag-and-drop support
 - **n8n Integration**: Seamlessly sends CSV files to n8n webhooks
+- **PDF Report Generation**: Automatically generates and displays PDF reports
+- **Interactive PDF Viewer**: View and download generated reports directly in the app
 - **File Validation**: Ensures only CSV files are uploaded
 - **Real-time Feedback**: Shows upload progress and status
 - **Responsive Design**: Works perfectly on all devices
@@ -30,7 +32,31 @@ A beautiful, production-ready React application for uploading CSV files to n8n w
    - Add a Webhook node (HTTP Request trigger)
    - Set the webhook to accept POST requests
    - Add nodes to process the uploaded CSV data
+   - **For PDF generation**: Configure your workflow to return a PDF file with Content-Type: application/pdf
    - Deploy your workflow
+
+## PDF Report Generation
+
+When your n8n workflow processes the CSV file and returns a PDF response:
+
+1. **Automatic Detection**: The app automatically detects PDF responses from the webhook
+2. **Instant Preview**: The PDF opens in a built-in viewer modal
+3. **Download Option**: Users can download the generated PDF report
+4. **File Management**: The app properly handles blob URLs and memory cleanup
+
+### n8n Workflow Configuration for PDF Response
+
+To return a PDF from your n8n workflow:
+
+```json
+{
+  "headers": {
+    "Content-Type": "application/pdf",
+    "Content-Disposition": "attachment; filename=report.pdf"
+  },
+  "body": "{{$binary.data}}"
+}
+```
 
 ## CSV File Format
 

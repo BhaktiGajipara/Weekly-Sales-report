@@ -5,6 +5,8 @@ export interface UploadResponse {
   success: boolean;
   message: string;
   data?: any;
+  pdfUrl?: string;
+  pdfBlob?: Blob;
 }
 
 export const uploadToN8n = async (file: File): Promise<UploadResponse> => {
@@ -35,7 +37,35 @@ export const uploadToN8n = async (file: File): Promise<UploadResponse> => {
       throw new Error(`HTTP error! status: ${response.status}`);
     }
 
-    const result = await response.json();
+    // Check if response is PDF
+    const contentType = response.headers.get('content-type');
+    if (contentType && contentType.includes('application/pdf')) {
+      const pdfBlob = await response.blob();
+      const pdfUrl = URL.createObjectURL(pdfBlob);
+      
+      return {
+        success: true,
+        message: 'File processed successfully and PDF generated',
+        pdfUrl,
+        pdfBlob
+      };
+    }
+
+    // Try to parse response based on content type
+    let result: any;
+    try {
+      if (contentType && contentType.includes('application/json')) {
+        result = await response.json();
+      } else {
+        // For non-JSON responses (text, html, etc.)
+        const textResult = await response.text();
+        result = textResult || 'File uploaded successfully';
+      }
+    } catch (parseError) {
+      // If parsing fails, treat as successful upload with basic message
+      console.warn('Could not parse response, but upload was successful:', parseError);
+      result = 'File uploaded successfully';
+    }
     
     return {
       success: true,
@@ -49,6 +79,8 @@ export const uploadToN8n = async (file: File): Promise<UploadResponse> => {
     
     if (error instanceof TypeError && error.message.includes('fetch')) {
       errorMessage = 'Cannot connect to n8n webhook. Please ensure:\n1. Your n8n instance is running\n2. The webhook workflow is activated\n3. The webhook URL in .env is correct\n4. CORS is configured in n8n to allow requests from this domain';
+    } else if (error instanceof SyntaxError && error.message.includes('JSON')) {
+      errorMessage = 'Upload succeeded, but received unexpected response format from webhook. Your file was processed successfully.';
     } else if (error instanceof Error) {
       errorMessage = error.message;
     }
