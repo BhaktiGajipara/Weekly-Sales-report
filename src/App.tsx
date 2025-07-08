@@ -2,7 +2,6 @@ import { useState } from 'react';
 import { FileUploader } from './components/FileUploader';
 import { ExpectedFormat } from './components/ExpectedFormat';
 import { Navigation } from './components/Navigation';
-import { PdfViewer } from './components/PdfViewer';
 import { uploadToN8n } from './services/n8nService';
 
 function App() {
@@ -26,9 +25,10 @@ function App() {
       if (result.success) {
         setUploadStatus('success');
         
-        // If PDF is returned, set the PDF URL
+        // If PDF is returned, set the PDF URL and switch to report tab
         if (result.pdfUrl) {
           setPdfUrl(result.pdfUrl);
+          setActiveTab('report');
         }
       } else {
         setUploadStatus('error');
@@ -62,7 +62,7 @@ function App() {
               uploadStatus={uploadStatus}
               errorMessage={errorMessage}
               pdfUrl={pdfUrl}
-              onViewReport={() => setPdfUrl(pdfUrl)} // This will trigger the PDF viewer
+              onViewReport={() => setActiveTab('report')}
             />
             
             <ExpectedFormat />
@@ -88,30 +88,117 @@ function App() {
       
       case 'report':
         return (
-          <div className="text-center py-20">
-            <div className="max-w-md mx-auto">
-              <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                <svg className="w-8 h-8 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
-                </svg>
+          <div>
+            {pdfUrl ? (
+              <div className="space-y-6">
+                <div className="text-center">
+                  <h2 className="text-3xl font-bold text-gray-900 mb-4">
+                    Generated Report
+                  </h2>
+                  <p className="text-lg text-gray-600 max-w-2xl mx-auto">
+                    Your CSV file has been processed successfully. View and download your report below.
+                  </p>
+                </div>
+                
+                <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+                  <div className="flex items-center justify-between mb-6">
+                    <div className="flex items-center space-x-3">
+                      <div className="p-2 bg-red-100 rounded-lg">
+                        <svg className="w-5 h-5 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                        </svg>
+                      </div>
+                      <div>
+                        <h3 className="text-lg font-semibold text-gray-900">
+                          Sales Report
+                        </h3>
+                        <p className="text-sm text-gray-600">
+                          {uploadedFileName.replace('.csv', '-report.pdf')}
+                        </p>
+                      </div>
+                    </div>
+                    <button
+                      onClick={() => {
+                        const link = document.createElement('a');
+                        link.href = pdfUrl;
+                        link.download = uploadedFileName.replace('.csv', '-report.pdf');
+                        document.body.appendChild(link);
+                        link.click();
+                        document.body.removeChild(link);
+                      }}
+                      className="flex items-center space-x-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+                    >
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                      </svg>
+                      <span>Download</span>
+                    </button>
+                  </div>
+
+                  {/* PDF Viewer */}
+                  <div className="w-full h-[600px] bg-gray-100 rounded-lg overflow-hidden">
+                    <iframe
+                      src={pdfUrl}
+                      className="w-full h-full border-0"
+                      title="PDF Report"
+                    />
+                  </div>
+
+                  {/* Footer */}
+                  <div className="mt-4 pt-4 border-t border-gray-200">
+                    <div className="flex items-center justify-between">
+                      <p className="text-sm text-gray-600">
+                        Report generated successfully from your uploaded CSV file
+                      </p>
+                      <div className="flex space-x-4">
+                        <button
+                          onClick={() => setActiveTab('upload')}
+                          className="text-sm text-blue-600 hover:text-blue-800 font-medium"
+                        >
+                          Upload New File
+                        </button>
+                        <button
+                          onClick={() => {
+                            setPdfUrl('');
+                            if (pdfUrl) {
+                              URL.revokeObjectURL(pdfUrl);
+                            }
+                          }}
+                          className="text-sm text-gray-600 hover:text-gray-800 font-medium"
+                        >
+                          Clear Report
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                </div>
               </div>
-              <h2 className="text-2xl font-bold text-gray-900 mb-4">Generate Report</h2>
-              <p className="text-gray-600">
-                View comprehensive reports and analytics once your data has been processed.
-              </p>
-            </div>
+            ) : (
+              <div className="text-center py-20">
+                <div className="max-w-md mx-auto">
+                  <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <svg className="w-8 h-8 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+                    </svg>
+                  </div>
+                  <h2 className="text-2xl font-bold text-gray-900 mb-4">No Reports Generated</h2>
+                  <p className="text-gray-600 mb-6">
+                    Upload a CSV file to generate your first sales report. Reports will appear here once processed.
+                  </p>
+                  <button
+                    onClick={() => setActiveTab('upload')}
+                    className="px-6 py-3 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 transition-colors"
+                  >
+                    Upload CSV File
+                  </button>
+                </div>
+              </div>
+            )}
           </div>
         );
       
       default:
         return null;
-    }
-  };
-
-  const handleClosePdf = () => {
-    setPdfUrl('');
-    if (pdfUrl) {
-      URL.revokeObjectURL(pdfUrl); // Clean up the blob URL
     }
   };
 
@@ -142,15 +229,6 @@ function App() {
           </div>
         </div>
       </footer>
-
-      {/* PDF Viewer Modal */}
-      {pdfUrl && (
-        <PdfViewer 
-          pdfUrl={pdfUrl} 
-          filename={uploadedFileName.replace('.csv', '-report.pdf')}
-          onClose={handleClosePdf}
-        />
-      )}
     </div>
   );
 }
