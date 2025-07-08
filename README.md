@@ -39,11 +39,14 @@ A beautiful, production-ready React application for uploading CSV files to n8n w
 
 When your n8n workflow processes the CSV file and returns a PDF response:
 
-1. **Automatic Detection**: The app automatically detects PDF responses from the webhook
-2. **Auto-navigation**: Automatically switches to the Report tab when a PDF is generated
-3. **Integrated Viewer**: The PDF displays directly in the Report tab (no modal popup)
-4. **Download Option**: Users can download the generated PDF report
-5. **File Management**: The app properly handles blob URLs and memory cleanup
+1. **File Upload**: Select and upload your CSV file from the Upload tab
+2. **Auto-navigation to Process**: Automatically switches to the Process tab during upload
+3. **Live Processing Status**: Shows real-time processing steps and progress indicator
+4. **Automatic Detection**: The app automatically detects PDF responses from the webhook
+5. **Auto-navigation to Report**: Automatically switches to the Report tab when PDF is generated
+6. **Integrated Viewer**: The PDF displays directly in the Report tab (no modal popup)
+7. **Download Option**: Users can download the generated PDF report
+8. **File Management**: The app properly handles blob URLs and memory cleanup
 
 ### n8n Workflow Configuration for PDF Response
 
